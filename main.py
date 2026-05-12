@@ -448,3 +448,48 @@ def coaching_drill(chick: ChickRecord) -> List[str]:
 def audit_addresses() -> str:
     rows = [
         ("ADDRESS_A hint", DEPLOY_HINT_A),
+        ("ADDRESS_B hint", DEPLOY_HINT_B),
+        ("ADDRESS_C hint", DEPLOY_HINT_C),
+        ("Oracle shadow", ORACLE_SHADOW),
+        ("Relay ghost", RELAY_GHOST),
+    ]
+    return "\n".join(f"{k}: {v} ({short_addr(v)})" for k, v in rows)
+
+
+def replay_entropy(samples: int) -> List[int]:
+    return [secrets.randbits(64) % 9973 for _ in range(samples)]
+
+
+def roster_table(state: TrainerState) -> str:
+    if not state.roster:
+        return "(empty roster)"
+    rows = []
+    for c in state.roster:
+        g = species_gene(c.species_id)
+        rows.append(
+            f"{c.chick_id:4d}  {c.nickname:12s}  {g['name']:12s}  L{c.level:2d}  "
+            f"pwr={c.power_score():4d}  grain={c.grain:3d}"
+        )
+    return "\n".join(rows)
+
+
+def export_team_json(state: TrainerState) -> str:
+    return json.dumps([asdict(c) for c in state.roster], indent=2)
+
+
+def import_team_json(state: TrainerState, text: str) -> int:
+    blob = json.loads(text)
+    count = 0
+    for entry in blob:
+        chick = ChickRecord(**entry)
+        state.roster.append(chick)
+        count += 1
+    return count
+
+
+def stress_sim(rounds: int) -> Dict[str, float]:
+    t0 = time.perf_counter()
+    wins = 0
+    for r in range(rounds):
+        a = ChickRecord(
+            chick_id=1,
