@@ -358,3 +358,48 @@ def banner() -> str:
         )
     )
 
+
+def short_addr(addr: str) -> str:
+    return f"{addr[:6]}…{addr[-4:]}"
+
+
+def describe_chick(chick: ChickRecord) -> str:
+    g = species_gene(chick.species_id)
+    mv = ", ".join(MOVE_NAMES.get(m, str(m)) for m in chick.moves[:4])
+    return (
+        f"#{chick.chick_id} {chick.nickname} [{g['name']}] L{chick.level} "
+        f"elem={chick.element} streak={chick.streak}\n"
+        f"  might={chick.might} guard={chick.guard} tempo={chick.tempo} "
+        f"vit={chick.vitality} grain={chick.grain} xp={chick.xp} evo={chick.evolved}\n"
+        f"  moves: {mv}"
+    )
+
+
+def list_species() -> str:
+    lines: List[str] = []
+    for idx, row in enumerate(SPECIES_ROWS, start=1):
+        name, might, guard, tempo, elem = row
+        lines.append(f"{idx:02d} {name:14} atk={might} def={guard} spd={tempo} elem={elem}")
+    return "\n".join(lines)
+
+
+def npc_team(seed: int) -> List[ChickRecord]:
+    rng = random.Random(seed)
+    team: List[ChickRecord] = []
+    for i in range(3):
+        sid = rng.randint(1, len(SPECIES_ROWS))
+        g = species_gene(sid)
+        chick = ChickRecord(
+            chick_id=1000 + i,
+            species_id=sid,
+            level=rng.randint(4, 18),
+            xp=rng.randint(200, 4000),
+            grain=rng.randint(20, 80),
+            vitality=rng.randint(40, 120),
+            might=int(g["might"]) + rng.randint(0, 4),
+            guard=int(g["guard"]) + rng.randint(0, 4),
+            tempo=int(g["tempo"]) + rng.randint(0, 4),
+            element=int(g["element"]),
+            nickname=f"Rival-{i+1}",
+            evolved=rng.random() < 0.25,
+            streak=0,
