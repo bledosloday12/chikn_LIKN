@@ -628,3 +628,48 @@ def interactive_loop(state: TrainerState, path: Path) -> None:
             print(f"+{g} grain")
             continue
         if head == "EVOLVE" and len(parts) == 2:
+            cid = int(parts[1])
+            chick = next((c for c in state.roster if c.chick_id == cid), None)
+            if not chick:
+                print("not found")
+                continue
+            try:
+                for line in evolve_chick(chick):
+                    print(line)
+            except ValueError as exc:
+                print(f"err: {exc}")
+            continue
+        if head == "MOVE" and len(parts) == 4:
+            cid = int(parts[1])
+            slot = int(parts[2])
+            code = int(parts[3])
+            chick = next((c for c in state.roster if c.chick_id == cid), None)
+            if not chick:
+                print("not found")
+                continue
+            try:
+                slot_move(chick, slot, code)
+                print("slotted")
+            except ValueError as exc:
+                print(f"err: {exc}")
+            continue
+        if head == "SPAR" and len(parts) == 3:
+            a_id = int(parts[1])
+            b_id = int(parts[2])
+            a = next((c for c in state.roster if c.chick_id == a_id), None)
+            b = next((c for c in state.roster if c.chick_id == b_id), None)
+            if not a or not b:
+                print("need two roster ids")
+                continue
+            w, l, xp = resolve_spar(a, b, secrets.randbits(64), secrets.randbits(256))
+            win = next(c for c in (a, b) if c.chick_id == w)
+            lose = next(c for c in (a, b) if c.chick_id == l)
+            win.xp += xp
+            win.streak += 1
+            lose.streak = 0
+            apply_level_sync(win)
+            print(f"Winner #{w} (+{xp} xp) loser #{l}")
+            continue
+        if head == "CUP":
+            for line in run_tournament(state):
+                print(line)
