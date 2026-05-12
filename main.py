@@ -133,3 +133,48 @@ def type_advantage(atk_elem: int, def_elem: int) -> int:
             return -1
         if def_elem == c and atk_elem == a:
             return -1
+    return 0
+
+
+def species_gene(species_id: int) -> Dict[str, Any]:
+    if species_id < 1 or species_id > len(SPECIES_ROWS):
+        raise ValueError("species range")
+    name, might, guard, tempo, elem = SPECIES_ROWS[species_id - 1]
+    return {
+        "id": species_id,
+        "name": name,
+        "might": might,
+        "guard": guard,
+        "tempo": tempo,
+        "element": elem,
+    }
+
+
+@dataclass
+class ChickRecord:
+    chick_id: int
+    species_id: int
+    level: int
+    xp: int
+    grain: int
+    vitality: int
+    might: int
+    guard: int
+    tempo: int
+    element: int
+    nickname: str
+    evolved: bool
+    streak: int
+    moves: List[int] = field(default_factory=list)
+
+    def power_score(self) -> int:
+        return self.might * 2 + self.guard + self.tempo
+
+
+@dataclass
+class TrainerState:
+    name: str
+    roster: List[ChickRecord]
+    bits: int = 0
+    coins: int = 0
+
