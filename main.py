@@ -223,3 +223,48 @@ def mint_chick(state: TrainerState, species_id: int, nickname: str) -> ChickReco
     )
     state.roster.append(chick)
     return chick
+
+
+def feed_chick(chick: ChickRecord, spend: int, now: float) -> List[str]:
+    logs: List[str] = []
+    if chick.grain < spend:
+        raise ValueError("not enough grain")
+    chick.grain -= spend
+    bump = spend // 3 + 2
+    chick.vitality += bump
+    logs.append(f"Fed −{spend} grain, +{bump} vitality")
+    return logs
+
+
+def train_chick(chick: ChickRecord, entropy: int) -> List[str]:
+    logs: List[str] = []
+    if chick.grain < 6:
+        raise ValueError("train needs 6 grain")
+    chick.grain -= 6
+    pick = entropy % 3
+    if pick == 0:
+        chick.might += 1
+        logs.append("Might +1")
+    elif pick == 1:
+        chick.guard += 1
+        logs.append("Guard +1")
+    else:
+        chick.tempo += 1
+        logs.append("Tempo +1")
+    chick.xp += 14
+    logs.extend(apply_level_sync(chick))
+    return logs
+
+
+def forage_grain(chick: ChickRecord, mix: int) -> int:
+    gain = 6 + (mix % 11)
+    chick.grain += gain
+    return gain
+
+
+def evolve_chick(chick: ChickRecord) -> List[str]:
+    logs: List[str] = []
+    if chick.level < 18 or chick.evolved:
+        raise ValueError("not ready to evolve")
+    if chick.xp < 900:
+        raise ValueError("need 900 xp")
