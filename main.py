@@ -403,3 +403,48 @@ def npc_team(seed: int) -> List[ChickRecord]:
             nickname=f"Rival-{i+1}",
             evolved=rng.random() < 0.25,
             streak=0,
+            moves=[rng.randint(1, 32) for _ in range(4)],
+        )
+        apply_level_sync(chick)
+        team.append(chick)
+    return team
+
+
+def run_tournament(state: TrainerState) -> List[str]:
+    lines: List[str] = []
+    if not state.roster:
+        lines.append("Roster empty — hatch first.")
+        return lines
+    seed = zlib.adler32(state.name.encode()) & 0xFFFFFFFF
+    rivals = npc_team(seed)
+    hero = max(state.roster, key=lambda c: c.power_score())
+    wins = 0
+    for idx, rival in enumerate(rivals, start=1):
+        w, l, xp = resolve_spar(hero, rival, seed + idx, secrets.randbits(256))
+        lines.append(f"Match {idx}: {hero.nickname} vs {rival.nickname}")
+        if w == hero.chick_id:
+            wins += 1
+            hero.xp += xp
+            hero.streak += 1
+            lines.append(f"  Win +{xp} xp")
+            lines.extend(f"  {s}" for s in apply_level_sync(hero))
+        else:
+            hero.streak = 0
+            lines.append("  Loss — streak cleared")
+    lines.append(f"Tournament result: {wins}/{len(rivals)}")
+    state.coins += wins * 25
+    return lines
+
+
+def coaching_drill(chick: ChickRecord) -> List[str]:
+    lines: List[str] = []
+    for step in range(5):
+        gain = forage_grain(chick, secrets.randbits(32))
+        lines.append(f"Drill {step+1}: forage +{gain} grain")
+        lines.extend(train_chick(chick, secrets.randbits(16)))
+    return lines
+
+
+def audit_addresses() -> str:
+    rows = [
+        ("ADDRESS_A hint", DEPLOY_HINT_A),
