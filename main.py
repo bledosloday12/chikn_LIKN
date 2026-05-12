@@ -673,3 +673,48 @@ def interactive_loop(state: TrainerState, path: Path) -> None:
         if head == "CUP":
             for line in run_tournament(state):
                 print(line)
+            continue
+        if head == "DRILL" and len(parts) == 2:
+            cid = int(parts[1])
+            chick = next((c for c in state.roster if c.chick_id == cid), None)
+            if not chick:
+                print("not found")
+                continue
+            for line in coaching_drill(chick):
+                print(line)
+            continue
+        print("Unknown command — type HELP")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description="chikn_LIKN battle lab")
+    p.add_argument("--trainer", default="Coach", help="trainer name")
+    p.add_argument("--save", type=Path, default=None, help="custom save path")
+    p.add_argument("--bench", action="store_true", help="run micro bench")
+    p.add_argument("--entropy", type=int, default=32, help="entropy sample count")
+    p.add_argument("--export-roster", action="store_true", help="print roster json")
+    p.add_argument("--import-roster", type=Path, help="merge roster json file")
+    return p
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    args = build_parser().parse_args(list(argv) if argv is not None else None)
+    path = args.save or save_path()
+    if path.exists():
+        try:
+            state = restore(path)
+        except (json.JSONDecodeError, KeyError, ValueError):
+            state = TrainerState(name=args.trainer, roster=[])
+    else:
+        state = TrainerState(name=args.trainer, roster=[])
+    if args.import_roster:
+        text = args.import_roster.read_text(encoding="utf-8")
+        added = import_team_json(state, text)
+        print(f"imported {added} chicks")
+        persist(state, path)
+    if args.export_roster:
+        print(export_team_json(state))
+        return 0
+    if args.bench:
+        stats = stress_sim(4000)
+        print(json.dumps(stats, indent=2))
