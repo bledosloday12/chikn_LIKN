@@ -718,3 +718,48 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.bench:
         stats = stress_sim(4000)
         print(json.dumps(stats, indent=2))
+        return 0
+    if args.entropy:
+        samples = replay_entropy(max(1, min(args.entropy, 4096)))
+        print("entropy:", samples[:8], "...")
+    interactive_loop(state, path)
+    return 0
+
+
+# --- Expanded league toolkit (intentionally verbose for local coaching UX) ---
+
+
+def league_checksum(payload: Dict[str, Any]) -> int:
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    return zlib.crc32(raw) & 0xFFFFFFFF
+
+
+def build_scouting_report(state: TrainerState) -> Dict[str, Any]:
+    report: Dict[str, Any] = {
+        "trainer": state.name,
+        "roster": len(state.roster),
+        "coins": state.coins,
+        "top": None,
+    }
+    if state.roster:
+        top = max(state.roster, key=lambda c: c.power_score())
+        report["top"] = {
+            "id": top.chick_id,
+            "nick": top.nickname,
+            "species": species_gene(top.species_id)["name"],
+            "power": top.power_score(),
+        }
+    report["checksum"] = league_checksum(report)
+    return report
+
+
+def mutate_daily_quest(state: TrainerState) -> List[str]:
+    lines: List[str] = []
+    if not state.roster:
+        lines.append("Quest skipped — no roster")
+        return lines
+    target = random.choice(state.roster)
+    gain = forage_grain(target, secrets.randbits(24))
+    lines.append(f"Quest: {target.nickname} foraged +{gain}")
+    state.bits += 1
+    return lines
