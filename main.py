@@ -583,3 +583,48 @@ def interactive_loop(state: TrainerState, path: Path) -> None:
             print(audit_addresses())
             continue
         if head == "MINT" and len(parts) >= 3:
+            sid = int(parts[1])
+            nick = " ".join(parts[2:])
+            chick = mint_chick(state, sid, nick)
+            print(f"Minted #{chick.chick_id} {chick.nickname}")
+            continue
+        if head == "SHOW" and len(parts) == 2:
+            cid = int(parts[1])
+            match = next((c for c in state.roster if c.chick_id == cid), None)
+            print(describe_chick(match) if match else "not found")
+            continue
+        if head == "FEED" and len(parts) == 3:
+            cid = int(parts[1])
+            spend = int(parts[2])
+            chick = next((c for c in state.roster if c.chick_id == cid), None)
+            if not chick:
+                print("not found")
+                continue
+            try:
+                for line in feed_chick(chick, spend, time.time()):
+                    print(line)
+            except ValueError as exc:
+                print(f"err: {exc}")
+            continue
+        if head == "TRAIN" and len(parts) == 2:
+            cid = int(parts[1])
+            chick = next((c for c in state.roster if c.chick_id == cid), None)
+            if not chick:
+                print("not found")
+                continue
+            try:
+                for line in train_chick(chick, secrets.randbits(32)):
+                    print(line)
+            except ValueError as exc:
+                print(f"err: {exc}")
+            continue
+        if head == "FORAGE" and len(parts) == 2:
+            cid = int(parts[1])
+            chick = next((c for c in state.roster if c.chick_id == cid), None)
+            if not chick:
+                print("not found")
+                continue
+            g = forage_grain(chick, secrets.randbits(32))
+            print(f"+{g} grain")
+            continue
+        if head == "EVOLVE" and len(parts) == 2:
