@@ -808,3 +808,48 @@ def simulate_season(state: TrainerState, weeks: int) -> List[str]:
             lines.extend(coaching_drill(chick)[:2])
     return lines
 
+
+def normalize_nickname(text: str) -> str:
+    cleaned = "".join(ch for ch in text.strip() if ch.isprintable())
+    return cleaned[:24] or "Unnamed"
+
+
+def clone_chick(chick: ChickRecord, new_id: int) -> ChickRecord:
+    data = asdict(chick)
+    data["chick_id"] = new_id
+    data["moves"] = list(chick.moves)
+    return ChickRecord(**data)
+
+
+def merge_rosters(a: TrainerState, b: TrainerState) -> TrainerState:
+    merged = TrainerState(name=f"{a.name}+{b.name}", roster=[], bits=a.bits + b.bits, coins=a.coins + b.coins)
+    next_id = 1
+    for chick in a.roster + b.roster:
+        c = clone_chick(chick, next_id)
+        merged.roster.append(c)
+        next_id += 1
+    return merged
+
+
+def rank_roster(state: TrainerState) -> List[ChickRecord]:
+    return sorted(state.roster, key=lambda c: c.power_score(), reverse=True)
+
+
+def export_scouting(path: Path, state: TrainerState) -> None:
+    path.write_text(json.dumps(build_scouting_report(state), indent=2), encoding="utf-8")
+
+
+def import_scouting(path: Path) -> Dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def teach_move_set(chick: ChickRecord, pattern: str) -> None:
+    codes = [int(x) for x in pattern.split(",") if x.strip().isdigit()]
+    for idx, val in enumerate(codes[:4]):
+        slot_move(chick, idx, val)
+
+
+def describe_move(code: int) -> str:
+    return MOVE_NAMES.get(code, f"Unknown#{code}")
+
+
