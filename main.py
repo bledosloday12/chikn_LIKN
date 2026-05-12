@@ -178,3 +178,48 @@ class TrainerState:
     bits: int = 0
     coins: int = 0
 
+    def next_id(self) -> int:
+        return max((c.chick_id for c in self.roster), default=0) + 1
+
+
+def level_from_xp(xp: int) -> int:
+    base = 1 + xp // 220
+    return min(72, max(1, base))
+
+
+def apply_level_sync(chick: ChickRecord) -> List[str]:
+    logs: List[str] = []
+    target = level_from_xp(chick.xp)
+    if target > chick.level:
+        delta = target - chick.level
+        chick.level = target
+        chick.vitality += delta * 3
+        chick.grain += delta * 2
+        logs.append(f"Level up x{delta} → {chick.level}")
+    return logs
+
+
+def mint_chick(state: TrainerState, species_id: int, nickname: str) -> ChickRecord:
+    g = species_gene(species_id)
+    cid = state.next_id()
+    base_v = g["might"] + g["guard"] + g["tempo"]
+    elem = int(g["element"])
+    moves = [1 + (elem % 7), 8 + (elem % 5), 15 + (elem % 4), 22 + (elem % 6)]
+    chick = ChickRecord(
+        chick_id=cid,
+        species_id=species_id,
+        level=1,
+        xp=0,
+        grain=48,
+        vitality=base_v,
+        might=int(g["might"]),
+        guard=int(g["guard"]),
+        tempo=int(g["tempo"]),
+        element=elem,
+        nickname=nickname.strip() or g["name"],
+        evolved=False,
+        streak=0,
+        moves=moves,
+    )
+    state.roster.append(chick)
+    return chick
