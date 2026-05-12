@@ -313,3 +313,48 @@ def slot_move(chick: ChickRecord, slot: int, code: int) -> None:
     if slot < 0 or slot >= 4:
         raise ValueError("slot")
     if code <= 0 or code > 32:
+        raise ValueError("move")
+    while len(chick.moves) < 4:
+        chick.moves.append(1)
+    chick.moves[slot] = code
+
+
+def dump_state(state: TrainerState) -> Dict[str, Any]:
+    return {"tag": APP_SEED_TAG, "trainer": state.name, "payload": asdict(state)}
+
+
+def load_state(blob: Dict[str, Any]) -> TrainerState:
+    if blob.get("tag") != APP_SEED_TAG:
+        raise ValueError("save tag mismatch")
+    payload = blob["payload"]
+    roster = [ChickRecord(**c) for c in payload["roster"]]
+    return TrainerState(name=str(payload["name"]), roster=roster, bits=int(payload.get("bits", 0)), coins=int(payload.get("coins", 0)))
+
+
+def save_path(home: Optional[Path] = None) -> Path:
+    base = home or Path(os.path.expanduser("~"))
+    return base / ".chikn_likn_save.json"
+
+
+def persist(state: TrainerState, path: Path) -> None:
+    path.write_text(json.dumps(dump_state(state), indent=2), encoding="utf-8")
+
+
+def restore(path: Path) -> TrainerState:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return load_state(data)
+
+
+def banner() -> str:
+    return "\n".join(
+        (
+            r"  ___________      .__  .__       .__  __   ",
+            r" /   _____/__  ____ |  | |__| ____ |__|/  |_ ",
+            r" \_____  \|  |/ ___\|  | |  |/    \|  \   __\\",
+            r" /        \  / /_/  >  |_|  |   |  \  ||  |  ",
+            r"/_______  /__\___  /|____/__|___|  /__||__|  ",
+            r"        \/   /_____/             \/          ",
+            "",
+        )
+    )
+
