@@ -88,3 +88,48 @@ MOVE_NAMES: Dict[int, str] = {
     10: "Static Down",
     11: "Barn Sweep",
     12: "Haymaker",
+    13: "Drift Peck",
+    14: "Gust Turn",
+    15: "Stone Stomp",
+    16: "Frost Ruffle",
+    17: "Moss Wrap",
+    18: "Tide Slap",
+    19: "Shadow Dart",
+    20: "Sun Flare",
+    21: "Moon Hook",
+    22: "Combo Rush",
+    23: "Guarded Peck",
+    24: "Tempo Swap",
+    25: "Counter Coop",
+    26: "League Finale",
+    27: "Yolk Surge",
+    28: "Crest Spin",
+    29: "Brood Wall",
+    30: "Arena Echo",
+    31: "Vault Strike",
+    32: "Void Tap",
+}
+
+
+def type_advantage(atk_elem: int, def_elem: int) -> int:
+    if atk_elem == def_elem:
+        return 0
+    rings = (
+        (1, 3, 2),
+        (4, 2, 5),
+        (6, 4, 7),
+        (8, 7, 1),
+    )
+    for a, b, c in rings:
+        if atk_elem == a and def_elem == b:
+            return 1
+        if atk_elem == b and def_elem == c:
+            return 1
+        if atk_elem == c and def_elem == a:
+            return 1
+        if def_elem == a and atk_elem == b:
+            return -1
+        if def_elem == b and atk_elem == c:
+            return -1
+        if def_elem == c and atk_elem == a:
+            return -1
