@@ -493,3 +493,48 @@ def stress_sim(rounds: int) -> Dict[str, float]:
     for r in range(rounds):
         a = ChickRecord(
             chick_id=1,
+            species_id=(r % 49) + 1,
+            level=10,
+            xp=2000,
+            grain=50,
+            vitality=80,
+            might=12,
+            guard=11,
+            tempo=11,
+            element=1,
+            nickname="A",
+            evolved=True,
+            streak=0,
+            moves=[1, 2, 3, 4],
+        )
+        b = ChickRecord(
+            chick_id=2,
+            species_id=((r + 7) % 49) + 1,
+            level=10,
+            xp=2000,
+            grain=50,
+            vitality=80,
+            might=11,
+            guard=12,
+            tempo=10,
+            element=2,
+            nickname="B",
+            evolved=False,
+            streak=0,
+            moves=[5, 6, 7, 8],
+        )
+        w, _, _ = resolve_spar(a, b, r, secrets.randbits(256))
+        if w == 1:
+            wins += 1
+    dt = time.perf_counter() - t0
+    return {"rounds": float(rounds), "wins_a": float(wins), "seconds": dt}
+
+
+def interactive_loop(state: TrainerState, path: Path) -> None:
+    print(banner())
+    print(f"Trainer {state.name} — save at {path}")
+    print("Type HELP for commands.\n")
+    while True:
+        try:
+            cmd = input("chikn> ").strip()
+        except (EOFError, KeyboardInterrupt):
