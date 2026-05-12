@@ -268,3 +268,48 @@ def evolve_chick(chick: ChickRecord) -> List[str]:
         raise ValueError("not ready to evolve")
     if chick.xp < 900:
         raise ValueError("need 900 xp")
+    chick.evolved = True
+    chick.might += 3
+    chick.guard += 3
+    chick.tempo += 2
+    chick.vitality += 20
+    logs.append("Evolution complete — crest reshaped")
+    return logs
+
+
+def resolve_spar(
+    a: ChickRecord,
+    b: ChickRecord,
+    spar_id: int,
+    prevrandao: int,
+) -> Tuple[int, int, int]:
+    entropy = int.from_bytes(
+        zlib.compress(
+            json.dumps(
+                [prevrandao, spar_id, a.chick_id, b.chick_id, a.xp, b.xp],
+                separators=(",", ":"),
+            ).encode(),
+            level=5,
+        )[:32],
+        "big",
+    )
+    score_a = a.might + a.tempo // 2
+    score_b = b.guard + b.tempo // 3
+    adv = type_advantage(a.element, b.element)
+    if adv > 0:
+        score_a += 7
+    elif adv < 0:
+        score_b += 7
+    score_a += entropy % 9
+    score_b += (entropy >> 64) % 9
+    if score_a >= score_b:
+        xp_gain = 28 + (entropy % 15)
+        return a.chick_id, b.chick_id, xp_gain
+    xp_gain = 20 + (entropy % 12)
+    return b.chick_id, a.chick_id, xp_gain
+
+
+def slot_move(chick: ChickRecord, slot: int, code: int) -> None:
+    if slot < 0 or slot >= 4:
+        raise ValueError("slot")
+    if code <= 0 or code > 32:
