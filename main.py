@@ -853,3 +853,48 @@ def describe_move(code: int) -> str:
     return MOVE_NAMES.get(code, f"Unknown#{code}")
 
 
+def move_lexicon() -> str:
+    rows = [f"{k:02d} {v}" for k, v in sorted(MOVE_NAMES.items())]
+    return "\n".join(rows)
+
+
+def pokedex_blurb(sid: int) -> str:
+    g = species_gene(sid)
+    adv_pairs: List[str] = []
+    for other in range(1, 9):
+        if other == g["element"]:
+            continue
+        if type_advantage(int(g["element"]), other) > 0:
+            adv_pairs.append(str(other))
+    weak = ", ".join(adv_pairs) or "balanced"
+    return f"{g['name']} presses best vs elements {weak}"
+
+
+def arena_blurb(a: ChickRecord, b: ChickRecord) -> str:
+    adv = type_advantage(a.element, b.element)
+    edge = "even"
+    if adv > 0:
+        edge = f"{a.nickname} favored"
+    elif adv < 0:
+        edge = f"{b.nickname} favored"
+    return f"Matchup: {edge} (element {a.element} vs {b.element})"
+
+
+def grain_forecast(chick: ChickRecord, days: int) -> int:
+    total = chick.grain
+    rng = random.Random(chick.chick_id + days)
+    for _ in range(days):
+        total += 6 + rng.randint(0, 10)
+        total -= rng.randint(0, 4)
+    return max(0, total)
+
+
+def xp_curve_preview(level: int) -> int:
+    return level * 220
+
+
+def chick_memory_digest(chick: ChickRecord) -> str:
+    raw = json.dumps(asdict(chick), sort_keys=True, separators=(",", ":")).encode()
+    return f"{zlib.adler32(raw):08x}"
+
+
