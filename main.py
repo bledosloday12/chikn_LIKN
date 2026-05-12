@@ -763,3 +763,48 @@ def mutate_daily_quest(state: TrainerState) -> List[str]:
     lines.append(f"Quest: {target.nickname} foraged +{gain}")
     state.bits += 1
     return lines
+
+
+def bulk_train(state: TrainerState, rounds: int) -> List[str]:
+    lines: List[str] = []
+    if not state.roster:
+        return ["empty roster"]
+    chick = random.choice(state.roster)
+    for _ in range(max(1, rounds)):
+        try:
+            lines.extend(train_chick(chick, secrets.randbits(48)))
+        except ValueError:
+            lines.append("halted — low grain")
+            break
+    return lines
+
+
+def element_breakdown(state: TrainerState) -> Dict[int, int]:
+    counts: Dict[int, int] = {}
+    for c in state.roster:
+        counts[c.element] = counts.get(c.element, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def suggest_counter(team: Sequence[ChickRecord]) -> Optional[str]:
+    if not team:
+        return None
+    focus = max(team, key=lambda c: c.might)
+    for sid in range(1, len(SPECIES_ROWS) + 1):
+        g = species_gene(sid)
+        adv = type_advantage(int(g["element"]), focus.element)
+        if adv > 0:
+            return f"Try hatching #{sid} {g['name']} to counter {focus.nickname}"
+    return "No hard counter found — diversify tempo"
+
+
+def simulate_season(state: TrainerState, weeks: int) -> List[str]:
+    lines: List[str] = []
+    for w in range(1, weeks + 1):
+        events = mutate_daily_quest(state)
+        lines.append(f"Week {w}: " + "; ".join(events))
+        if state.roster:
+            chick = state.roster[(w - 1) % len(state.roster)]
+            lines.extend(coaching_drill(chick)[:2])
+    return lines
+
