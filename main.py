@@ -538,3 +538,48 @@ def interactive_loop(state: TrainerState, path: Path) -> None:
         try:
             cmd = input("chikn> ").strip()
         except (EOFError, KeyboardInterrupt):
+            print("\nBye.")
+            return
+        if not cmd:
+            continue
+        parts = cmd.split()
+        head = parts[0].upper()
+        if head in {"Q", "QUIT", "EXIT"}:
+            persist(state, path)
+            print("Saved. Bye.")
+            return
+        if head == "HELP":
+            print(
+                "\n".join(
+                    (
+                        "HELP | Q",
+                        "ROSTER | SPECIES | ADDRS",
+                        "MINT <speciesId> <nickname>",
+                        "SHOW <chickId>",
+                        "FEED <chickId> <grain>",
+                        "TRAIN <chickId>",
+                        "FORAGE <chickId>",
+                        "EVOLVE <chickId>",
+                        "MOVE <chickId> <slot0-3> <moveCode>",
+                        "SPAR <attackerId> <defenderId>",
+                        "CUP (tournament)",
+                        "DRILL <chickId>",
+                        "SAVE",
+                    )
+                )
+            )
+            continue
+        if head == "SAVE":
+            persist(state, path)
+            print("OK")
+            continue
+        if head == "ROSTER":
+            print(roster_table(state))
+            continue
+        if head == "SPECIES":
+            print(list_species())
+            continue
+        if head == "ADDRS":
+            print(audit_addresses())
+            continue
+        if head == "MINT" and len(parts) >= 3:
