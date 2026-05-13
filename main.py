@@ -943,3 +943,48 @@ def telemetry_ping() -> Dict[str, Any]:
     return {
         "ts": time.time(),
         "py": sys.version.split()[0],
+        "seed": secrets.token_hex(8),
+    }
+
+
+def offline_rng_chain(n: int) -> List[int]:
+    return [secrets.randbelow(10_000) for _ in range(n)]
+
+
+def battle_commentary(w_id: int, l_id: int, xp: int) -> str:
+    return f"Chick {w_id} clinches +{xp} xp while {l_id} regroups."
+
+
+def roster_json_min(state: TrainerState) -> str:
+    slim = [{"id": c.chick_id, "nick": c.nickname, "species": c.species_id} for c in state.roster]
+    return json.dumps(slim)
+
+
+def warmup_moves(chick: ChickRecord) -> List[str]:
+    return [describe_move(m) for m in chick.moves[:4]]
+
+
+def rehome_chick(state: TrainerState, chick_id: int) -> bool:
+    before = len(state.roster)
+    state.roster = [c for c in state.roster if c.chick_id != chick_id]
+    return len(state.roster) < before
+
+
+def nick_collision(state: TrainerState, nick: str) -> bool:
+    return any(c.nickname.lower() == nick.lower() for c in state.roster)
+
+
+def rename_chick(state: TrainerState, chick_id: int, nick: str) -> bool:
+    chick = next((c for c in state.roster if c.chick_id == chick_id), None)
+    if not chick:
+        return False
+    chick.nickname = normalize_nickname(nick)
+    return True
+
+
+def grant_bonus_grain(chick: ChickRecord, amount: int) -> None:
+    chick.grain += max(0, amount)
+
+
+def league_seed_mix() -> int:
+    return int.from_bytes(secrets.token_bytes(8), "big")
