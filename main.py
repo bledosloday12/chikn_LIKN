@@ -1123,3 +1123,48 @@ def league_banner_lines() -> List[str]:
 
 
 def print_league_banner() -> None:
+    print("\n".join(league_banner_lines()))
+
+
+def debug_state(state: TrainerState) -> Dict[str, Any]:
+    return {
+        "trainer": state.name,
+        "roster": len(state.roster),
+        "audit": audit_roster_ids(state),
+        "digest": trainer_digest(state),
+    }
+
+
+def selftest() -> None:
+    st = TrainerState(name="SelfTest", roster=[])
+    c = mint_chick(st, 3, "Tester")
+    assert c.species_id == 3
+    train_chick(c, 2)
+    w, l, xp = resolve_spar(c, clone_chick(c, 99), 1, 12345)
+    assert w in (c.chick_id, 99)
+    assert xp > 0
+    assert type_advantage(1, 3) == 1
+
+
+def bench_training_path(chick: ChickRecord, steps: int) -> List[int]:
+    curve: List[int] = []
+    for s in range(steps):
+        try:
+            train_chick(chick, s * 7919)
+            curve.append(chick.might + chick.guard + chick.tempo)
+        except ValueError:
+            curve.append(-1)
+            break
+    return curve
+
+
+def roster_histogram(state: TrainerState) -> Dict[str, int]:
+    hist = {"low": 0, "mid": 0, "high": 0}
+    for c in state.roster:
+        p = c.power_score()
+        if p < 45:
+            hist["low"] += 1
+        elif p < 60:
+            hist["mid"] += 1
+        else:
+            hist["high"] += 1
