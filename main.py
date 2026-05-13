@@ -1168,3 +1168,48 @@ def roster_histogram(state: TrainerState) -> Dict[str, int]:
             hist["mid"] += 1
         else:
             hist["high"] += 1
+    return hist
+
+
+def mock_contract_call(label: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    return {"label": label, "echo": payload, "nonce": secrets.token_hex(6)}
+
+
+def serialize_chick_csv(state: TrainerState) -> str:
+    rows = ["id,nick,species,level,power,grain,xp"]
+    for c in state.roster:
+        rows.append(
+            f"{c.chick_id},{c.nickname},{c.species_id},{c.level},{c.power_score()},{c.grain},{c.xp}"
+        )
+    return "\n".join(rows)
+
+
+def parse_chick_csv(text: str) -> List[ChickRecord]:
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    out: List[ChickRecord] = []
+    for ln in lines[1:]:
+        parts = ln.split(",")
+        if len(parts) < 7:
+            continue
+        g = species_gene(int(parts[2]))
+        out.append(
+            ChickRecord(
+                chick_id=int(parts[0]),
+                species_id=int(parts[2]),
+                level=int(parts[3]),
+                xp=int(parts[6]),
+                grain=int(parts[5]),
+                vitality=g["might"] + g["guard"] + g["tempo"],
+                might=g["might"],
+                guard=g["guard"],
+                tempo=g["tempo"],
+                element=g["element"],
+                nickname=parts[1],
+                evolved=False,
+                streak=0,
+                moves=[1, 8, 15, 22],
+            )
+        )
+    return out
+
+
