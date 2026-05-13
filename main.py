@@ -1258,3 +1258,48 @@ def rng_weights(species_id: int) -> List[float]:
         float(g["guard"]) / 20.0,
         float(g["tempo"]) / 20.0,
     ]
+
+
+def weighted_pick(weights: Sequence[float]) -> int:
+    total = sum(weights)
+    r = secrets.randbelow(1_000_000) / 1_000_000 * total
+    acc = 0.0
+    for idx, w in enumerate(weights):
+        acc += w
+        if r <= acc:
+            return idx
+    return len(weights) - 1
+
+
+def train_weighted(chick: ChickRecord) -> List[str]:
+    w = rng_weights(chick.species_id)
+    choice = weighted_pick(w)
+    lines = train_chick(chick, choice + secrets.randbelow(256))
+    lines.insert(0, f"Weighted focus {choice}")
+    return lines
+
+
+def mock_bridge_ping() -> str:
+    return f"bridge:{secrets.token_hex(4)}"
+
+
+def describe_trainer_state(state: TrainerState) -> Dict[str, Any]:
+    return {
+        "name": state.name,
+        "roster": len(state.roster),
+        "xp": roster_total_xp(state),
+        "grain": roster_total_grain(state),
+        "elements": element_breakdown(state),
+    }
+
+
+def safe_mint_flow(state: TrainerState, sid: int, nick: str) -> Tuple[ChickRecord, List[str]]:
+    logs: List[str] = []
+    if nick_collision(state, nick):
+        logs.append("warn: nickname collision")
+    chick = mint_chick(state, sid, nick)
+    logs.append(f"digest {chick_memory_digest(chick)}")
+    return chick, logs
+
+
+def replay_spar_log(state: TrainerState, rounds: int) -> List[str]:
