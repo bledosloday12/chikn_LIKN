@@ -898,3 +898,48 @@ def chick_memory_digest(chick: ChickRecord) -> str:
     return f"{zlib.adler32(raw):08x}"
 
 
+def trainer_digest(state: TrainerState) -> str:
+    raw = json.dumps(dump_state(state), sort_keys=True, separators=(",", ":")).encode()
+    return f"{zlib.crc32(raw) & 0xFFFFFFFF:08x}"
+
+
+def roll_call(state: TrainerState) -> str:
+    names = ", ".join(c.nickname for c in state.roster)
+    return names or "(silent coop)"
+
+
+def sprint_cycle(state: TrainerState) -> List[str]:
+    lines: List[str] = []
+    for chick in state.roster[:3]:
+        lines.append(f"{chick.nickname}: power {chick.power_score()}")
+        lines.extend(apply_level_sync(chick))
+    return lines
+
+
+def danger_zone_report(chick: ChickRecord) -> List[str]:
+    issues: List[str] = []
+    if chick.grain < 8:
+        issues.append("low grain")
+    if chick.vitality < 30:
+        issues.append("low vitality")
+    if chick.level < 6 and chick.xp > 800:
+        issues.append("xp heavy — train")
+    return issues or ["stable"]
+
+
+def coach_notes(state: TrainerState) -> str:
+    lines = [
+        f"Trainer digest {trainer_digest(state)}",
+        f"Roster {len(state.roster)} | coins {state.coins}",
+        f"Elements {element_breakdown(state)}",
+    ]
+    tip = suggest_counter(state.roster)
+    if tip:
+        lines.append(tip)
+    return "\n".join(lines)
+
+
+def telemetry_ping() -> Dict[str, Any]:
+    return {
+        "ts": time.time(),
+        "py": sys.version.split()[0],
