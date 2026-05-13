@@ -1078,3 +1078,48 @@ def dual_spar_series(state: TrainerState, rounds: int) -> List[str]:
     a, b = state.roster[0], state.roster[1]
     for r in range(rounds):
         w, l, xp = resolve_spar(a, b, r, mock_prevrandao())
+        win = a if w == a.chick_id else b
+        win.xp += xp
+        apply_level_sync(win)
+        lines.append(battle_commentary(w, l, xp))
+    return lines
+
+
+def champion_chain(state: TrainerState) -> Optional[ChickRecord]:
+    ranked = rank_roster(state)
+    return ranked[0] if ranked else None
+
+
+def underdog_pick(state: TrainerState) -> Optional[ChickRecord]:
+    ranked = rank_roster(state)
+    return ranked[-1] if ranked else None
+
+
+def schedule_reminder() -> str:
+    return "Feed cadence 120s | Train cadence 240s | Spar cadence 90s (on-chain mirrors)"
+
+
+def ascii_chick() -> str:
+    return "\n".join(
+        (
+            "     .-.",
+            "    (o o)",
+            "    | O \\",
+            "     \\   \\",
+            "      `~~~`",
+        )
+    )
+
+
+def story_seed() -> str:
+    return secrets.token_urlsafe(12)
+
+
+def league_banner_lines() -> List[str]:
+    return [
+        "ChickCombo league sync: offline safe mode",
+        f"Hints {short_addr(DEPLOY_HINT_A)} / {short_addr(DEPLOY_HINT_B)} / {short_addr(DEPLOY_HINT_C)}",
+    ]
+
+
+def print_league_banner() -> None:
