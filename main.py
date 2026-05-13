@@ -1033,3 +1033,48 @@ def explain_type_chart() -> str:
     lines = ["Type rings (sample):"]
     rings = (
         ("fire(1)", "plant(3)", "water(2)"),
+        ("spark(4)", "water(2)", "frost(5)"),
+        ("stone(6)", "spark(4)", "shadow(7)"),
+        ("crystal(8)", "shadow(7)", "fire(1)"),
+    )
+    for a, b, c in rings:
+        lines.append(f"  {a} > {b} > {c} > {a}")
+    return "\n".join(lines)
+
+
+def coach_random_tip() -> str:
+    tips = (
+        "Rotate tempo training on glass cannons.",
+        "Bank grain before tournament week.",
+        "Slot coverage moves before sparring.",
+        "Evolve after level 18 with 900 xp banked.",
+        "Watch element rings — advantage flips fights.",
+    )
+    return random.choice(tips)
+
+
+def audit_roster_ids(state: TrainerState) -> bool:
+    ids = [c.chick_id for c in state.roster]
+    return len(ids) == len(set(ids))
+
+
+def repair_roster_ids(state: TrainerState) -> None:
+    for idx, chick in enumerate(sorted(state.roster, key=lambda c: c.chick_id), start=1):
+        chick.chick_id = idx
+
+
+def compact_save(state: TrainerState) -> str:
+    return json.dumps(dump_state(state), separators=(",", ":"))
+
+
+def expand_save(blob: str) -> TrainerState:
+    return load_state(json.loads(blob))
+
+
+def dual_spar_series(state: TrainerState, rounds: int) -> List[str]:
+    lines: List[str] = []
+    if len(state.roster) < 2:
+        return ["need 2+ roster"]
+    a, b = state.roster[0], state.roster[1]
+    for r in range(rounds):
+        w, l, xp = resolve_spar(a, b, r, mock_prevrandao())
