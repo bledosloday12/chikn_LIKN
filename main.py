@@ -988,3 +988,48 @@ def grant_bonus_grain(chick: ChickRecord, amount: int) -> None:
 
 def league_seed_mix() -> int:
     return int.from_bytes(secrets.token_bytes(8), "big")
+
+
+def mock_prevrandao() -> int:
+    return secrets.randbits(256)
+
+
+def compare_chicks(a: ChickRecord, b: ChickRecord) -> str:
+    if a.power_score() == b.power_score():
+        return "tie power"
+    return f"{a.nickname} wins power" if a.power_score() > b.power_score() else f"{b.nickname} wins power"
+
+
+def roster_filter_element(state: TrainerState, elem: int) -> List[ChickRecord]:
+    return [c for c in state.roster if c.element == elem]
+
+
+def roster_total_xp(state: TrainerState) -> int:
+    return sum(c.xp for c in state.roster)
+
+
+def roster_total_grain(state: TrainerState) -> int:
+    return sum(c.grain for c in state.roster)
+
+
+def simulate_coin_flip() -> str:
+    return "heads" if secrets.randbelow(2) == 0 else "tails"
+
+
+def day_night_buff(chick: ChickRecord) -> str:
+    return "nocturne" if chick.element in {7, 5} else "diurnal"
+
+
+def hatch_plan(target_power: int) -> List[int]:
+    plan: List[int] = []
+    for sid in range(1, len(SPECIES_ROWS) + 1):
+        g = species_gene(sid)
+        if g["might"] + g["guard"] + g["tempo"] >= target_power:
+            plan.append(sid)
+    return plan[:8]
+
+
+def explain_type_chart() -> str:
+    lines = ["Type rings (sample):"]
+    rings = (
+        ("fire(1)", "plant(3)", "water(2)"),
