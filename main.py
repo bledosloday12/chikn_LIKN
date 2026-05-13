@@ -1213,3 +1213,48 @@ def parse_chick_csv(text: str) -> List[ChickRecord]:
     return out
 
 
+def attach_csv_roster(state: TrainerState, text: str) -> int:
+    before = len(state.roster)
+    for chick in parse_chick_csv(text):
+        state.roster.append(chick)
+    return len(state.roster) - before
+
+
+def duel_commentary(a: ChickRecord, b: ChickRecord) -> List[str]:
+    return [
+        arena_blurb(a, b),
+        f"{a.nickname} power {a.power_score()} vs {b.nickname} {b.power_score()}",
+        day_night_buff(a) + " / " + day_night_buff(b),
+    ]
+
+
+def league_schedule_stub() -> List[Tuple[int, str]]:
+    return [(1, "Grain Cup"), (2, "Tempo Clash"), (3, "Element Open"), (4, "Brood Finals")]
+
+
+def print_schedule() -> None:
+    for rnd, title in league_schedule_stub():
+        print(f"Round {rnd}: {title}")
+
+
+def coach_profile_card(state: TrainerState) -> str:
+    champ = champion_chain(state)
+    dog = underdog_pick(state)
+    lines = [
+        f"Coach {state.name}",
+        f"Coins {state.coins} | Bits {state.bits}",
+    ]
+    if champ:
+        lines.append(f"Champion candidate: {champ.nickname} ({champ.power_score()})")
+    if dog:
+        lines.append(f"Bench project: {dog.nickname} ({dog.power_score()})")
+    return "\n".join(lines)
+
+
+def rng_weights(species_id: int) -> List[float]:
+    g = species_gene(species_id)
+    return [
+        float(g["might"]) / 20.0,
+        float(g["guard"]) / 20.0,
+        float(g["tempo"]) / 20.0,
+    ]
